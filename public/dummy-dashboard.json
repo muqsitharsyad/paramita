@@ -1,0 +1,52 @@
+{
+    "status": "success",
+    "code": 200,
+    "message": "Dashboard data fetched successfully.",
+    "timestamp": "2025-07-14T13:00:00+07:00",
+    "data": {
+        "title": "Dashboard",
+        "semester": "Semester Genap 2024",
+        "summaryCards": [
+            { "label": "Do Today", "value": 0 },
+            { "label": "Do Next Day", "value": 0 },
+            { "label": "Do Waiting", "value": 0 },
+            { "label": "Do In Progress", "value": 0 },
+            { "label": "Do Done", "value": 35331 },
+            { "label": "Total Order", "value": 35331 }
+        ],
+        "charts": {
+            "doByDate": {
+                "title": "DO By Date",
+                "dateRange": {
+                    "start": "2025-01-08",
+                    "end": "2025-04-11"
+                },
+                "zoomOptions": ["1m", "3m", "6m", "YTD", "1y", "All"],
+                "data": [
+                    { "date": "Jan 8", "do": 62 },
+                    { "date": "Jan 12", "do": 194 },
+                    { "date": "Feb 25", "do": 3354 },
+                    { "date": "Mar 3", "do": 5013 },
+                    { "date": "Mar 10", "do": 632 },
+                    { "date": "Apr 10", "do": 20 }
+                ]
+            },
+            "deliveryPercentage": {
+                "title": "Persentase Paket BA Terkirim",
+                "data": [
+                    { "label": "Terkirim Ke Mahasiswa", "value": 99.9 },
+                    { "label": "Dikirim Ke UT", "value": 0.1 },
+                    { "label": "Belum Terkirim", "value": 0.0 }
+                ]
+            }
+        },
+        "deliveryStats": [
+            { "label": "Waybill Today", "value": 0 },
+            { "label": "On Delivery", "value": 0 },
+            { "label": "Retur", "value": 28 },
+            { "label": "Delivered To Mahasiswa", "value": 35203 },
+            { "label": "Total Delivered", "value": 35331 },
+            { "label": "Total Waybill", "value": 35331 }
+        ]
+    }
+}
