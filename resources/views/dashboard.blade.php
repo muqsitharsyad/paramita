@@ -61,17 +61,34 @@
                                 @endforeach
                             </div>
                             <div class="row mb-4">
-                                <div class="col-md-8">
+                                <div class="col-md-12">
                                     <div class="card">
                                         <div class="card-body">
                                             <div id="chart_do_by_date_{{ Str::slug($vendorName) }}" style="height:300px;"></div>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                            <div class="row mb-4">
                                 <div class="col-md-4">
                                     <div class="card">
                                         <div class="card-body">
                                             <div id="chart_persentase_ba_{{ Str::slug($vendorName) }}" style="height:300px;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Add more charts as needed -->  
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div id="chart_do_status_{{ Str::slug($vendorName) }}" style="height:300px;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div id="chart_do_ekspeditur_{{ Str::slug($vendorName) }}" style="height:300px;"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -119,6 +136,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 name: 'Persentase',
                 colorByPoint: true,
                 data: {!! json_encode(collect($vendorData['charts']['deliveryPercentage']['data'] ?? [])->map(function($item){ return ['name'=>$item['label'],'y'=>$item['value']]; })->values()) !!}
+            }]
+        });
+        // DO Status Chart
+        Highcharts.chart('chart_do_status_{{ Str::slug($vendorName) }}', {
+            chart: { type: 'pie' },
+            title: { text: '{{ $vendorData['charts']['DoStatus']['title'] ?? 'ALL DO Status' }}' },
+            series: [{
+                name: 'Status',
+                colorByPoint: true,
+                data: {!! json_encode(collect($vendorData['charts']['DoStatus']['data'] ?? [])->map(function($item){ return ['name'=>$item['label'],'y'=>$item['value']]; })->values()) !!}
+            }]
+        });
+        // DO Ekspeditur Chart
+        Highcharts.chart('chart_do_ekspeditur_{{ Str::slug($vendorName) }}', {
+            chart: { type: 'pie' },
+            title: { text: '{{ $vendorData['charts']['DoEkspeditur']['title'] ?? 'DO By Ekspeditur' }}' },
+            series: [{
+                name: 'Ekspeditur',
+                colorByPoint: true,
+                data: {!! json_encode(collect($vendorData['charts']['DoEkspeditur']['data'] ?? [])->map(function($item){ return ['name'=>$item['label'],'y'=>$item['value']]; })->values()) !!}
             }]
         });
     @endforeach

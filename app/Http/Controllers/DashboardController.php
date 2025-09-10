@@ -20,6 +20,7 @@ class DashboardController extends Controller
         
         $vendorApis = ApiEndpoint::with(['vendorApi', 'vendorApi.vendor'])
                         ->where('api_endpoints.name', 'dashboard')
+                        ->where('api_endpoints.status', 'active')
                         ->get();
         
         $vendorDashboardData = [];
