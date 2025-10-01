@@ -15,19 +15,10 @@ return new class extends Migration
             $table->string('keterangan')->nullable();
             $table->timestamps();
         });
-
-        Schema::table('users', function (Blueprint $table) {
-            $table->unsignedBigInteger('unit_kerja_id')->nullable()->after('password');
-            $table->foreign('unit_kerja_id')->references('id')->on('unit_kerjas')->nullOnDelete();
-        });
     }
 
     public function down(): void
     {
         Schema::dropIfExists('unit_kerjas');
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['unit_kerja_id']);
-            $table->dropColumn('unit_kerja_id');
-        });
     }
 };
