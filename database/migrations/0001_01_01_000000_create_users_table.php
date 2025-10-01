@@ -15,12 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->string('nip')->nullable()->unique();
-            $table->string('avatar')->nullable();
-            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->unsignedBigInteger('unit_kerja_id')->nullable();
-            $table->foreign('unit_kerja_id')->references('id')->on('unit_kerjas')->nullOnDelete();
             $table->rememberToken();
             $table->timestamps();
         });

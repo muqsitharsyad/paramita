@@ -7,55 +7,186 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+# Paramita
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Paramita adalah aplikasi web yang dibangun menggunakan Laravel framework. Aplikasi ini dikembangkan untuk [jelaskan tujuan/fungsi aplikasi Anda di sini].
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tentang Paramita
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Paramita menyediakan fitur-fitur berikut:
 
-## Learning Laravel
+-   [Daftar fitur utama aplikasi]
+-   [Fitur kedua]
+-   [Fitur ketiga]
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Teknologi yang Digunakan
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+-   **Backend**: Laravel 11
+-   **Database**: MySQL
+-   **Frontend**: Blade Templates, Bootstrap/CSS
+-   **Server**: Apache/Nginx
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Persyaratan Sistem
 
-## Laravel Sponsors
+-   PHP >= 8.1
+-   Composer
+-   MySQL/MariaDB
+-   Node.js & NPM (untuk asset compilation)
+-   Apache/Nginx web server
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Cara Instalasi
 
-### Premium Partners
+Ikuti langkah-langkah berikut untuk menginstall aplikasi setelah melakukan clone repository:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 1. Clone Repository
 
-## Contributing
+```bash
+git clone https://github.com/username/paramita.git
+cd paramita
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 2. Install Dependencies
 
-## Code of Conduct
+```bash
+# Install PHP dependencies
+composer install
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# Install Node.js dependencies
+npm install
+```
 
-## Security Vulnerabilities
+### 3. Environment Setup
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+# Copy file environment
+cp .env.example .env
 
-## License
+# Generate application key
+php artisan key:generate
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 4. Database Configuration
+
+Edit file `.env` dan sesuaikan konfigurasi database:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=paramita
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+```
+
+### 5. Database Migration & Seeding
+
+```bash
+# Buat database baru di MySQL
+# Kemudian jalankan migration
+php artisan migrate
+
+# (Opsional) Jalankan seeder untuk data awal
+php artisan db:seed
+```
+
+### 6. Storage Link
+
+```bash
+# Buat symbolic link untuk storage
+php artisan storage:link
+```
+
+### 7. Compile Assets
+
+```bash
+# Development
+npm run dev
+
+# Production
+npm run build
+```
+
+### 8. Jalankan Aplikasi
+
+```bash
+# Menggunakan built-in server Laravel
+php artisan serve
+
+# Atau akses melalui web server (Apache/Nginx)
+# http://localhost/paramita/public
+```
+
+## Konfigurasi Tambahan
+
+### Cache Configuration
+
+```bash
+# Clear cache
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+
+# Optimize untuk production
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+### File Permissions (Linux/Mac)
+
+```bash
+chmod -R 755 storage
+chmod -R 755 bootstrap/cache
+```
+
+## Penggunaan
+
+1. Akses aplikasi melalui browser di `http://localhost:8000` (jika menggunakan `php artisan serve`)
+2. [Tambahkan instruksi penggunaan aplikasi]
+
+## Kontribusi
+
+Jika Anda ingin berkontribusi pada project ini:
+
+1. Fork repository ini
+2. Buat branch untuk fitur baru (`git checkout -b fitur-baru`)
+3. Commit perubahan (`git commit -am 'Menambah fitur baru'`)
+4. Push ke branch (`git push origin fitur-baru`)
+5. Buat Pull Request
+
+## Troubleshooting
+
+### Error "Permission denied"
+
+```bash
+# Linux/Mac
+sudo chown -R $USER:www-data storage
+sudo chown -R $USER:www-data bootstrap/cache
+```
+
+### Error "Key not found"
+
+```bash
+php artisan key:generate
+```
+
+### Error Database Connection
+
+-   Pastikan MySQL service berjalan
+-   Cek konfigurasi database di file `.env`
+-   Pastikan database sudah dibuat
+
+## Lisensi
+
+Project ini menggunakan lisensi [MIT License](https://opensource.org/licenses/MIT).
+
+## Kontak
+
+-   **Developer**: [Nama Anda]
+-   **Email**: [email@example.com]
+-   **GitHub**: [https://github.com/username](https://github.com/username)
+
+---
+
+<p align="center">Dibuat dengan ❤️ menggunakan Laravel</p>
