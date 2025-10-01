@@ -115,16 +115,16 @@ class VendorApiResource extends Resource
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Health Status')
-                    ->schema([
-                        Forms\Components\Toggle::make('is_healthy')
-                            ->default(true)
-                            ->label('Is Healthy'),
-                        Forms\Components\DateTimePicker::make('last_tested_at')
-                            ->label('Last Tested At')
-                            ->displayFormat('Y-m-d H:i:s'),
-                    ])
-                    ->columns(2),
+                // Forms\Components\Section::make('Health Status')
+                //     ->schema([
+                //         Forms\Components\Toggle::make('is_healthy')
+                //             ->default(true)
+                //             ->label('Is Healthy'),
+                //         Forms\Components\DateTimePicker::make('last_tested_at')
+                //             ->label('Last Tested At')
+                //             ->displayFormat('Y-m-d H:i:s'),
+                //     ])
+                //     ->columns(2),
             ]);
     }
 
@@ -151,9 +151,9 @@ class VendorApiResource extends Resource
                 Tables\Columns\TextColumn::make('version')
                     ->searchable()
                     ->label('Version'),
-                Tables\Columns\TextColumn::make('email')
-                    ->searchable()
-                    ->label('Email'),
+                // Tables\Columns\TextColumn::make('email')
+                //     ->searchable()
+                //     ->label('Email'),
                 Tables\Columns\TextColumn::make('password')
                     ->label('Password')
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -173,19 +173,19 @@ class VendorApiResource extends Resource
                         'danger' => 'maintenance',
                     ])
                     ->label('Status'),
-                Tables\Columns\IconColumn::make('is_healthy')
-                    ->boolean()
-                    ->label('Healthy'),
-                Tables\Columns\TextColumn::make('last_tested_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('Last Tested'),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('Created At'),
+                // Tables\Columns\IconColumn::make('is_healthy')
+                //     ->boolean()
+                //     ->label('Healthy'),
+                // Tables\Columns\TextColumn::make('last_tested_at')
+                //     ->dateTime()
+                //     ->sortable()
+                //     ->toggleable(isToggledHiddenByDefault: true)
+                //     ->label('Last Tested'),
+                // Tables\Columns\TextColumn::make('created_at')
+                //     ->dateTime()
+                //     ->sortable()
+                //     ->toggleable(isToggledHiddenByDefault: true)
+                //     ->label('Created At'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('vendor_id')
@@ -209,24 +209,13 @@ class VendorApiResource extends Resource
                         'maintenance' => 'Maintenance',
                     ])
                     ->label('Status'),
-                Tables\Filters\TernaryFilter::make('is_healthy')
-                    ->label('Health Status'),
+                // Tables\Filters\TernaryFilter::make('is_healthy')
+                //     ->label('Health Status'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
-                Tables\Actions\Action::make('test')
-                    ->icon('heroicon-o-play')
-                    ->color('info')
-                    ->action(function (VendorApi $record) {
-                        // Logic untuk test API
-                        $record->update(['last_tested_at' => now()]);
-                    })
-                    ->requiresConfirmation()
-                    ->modalHeading('Test API Connection')
-                    ->modalDescription('Are you sure you want to test this API connection?')
-                    ->modalSubmitActionLabel('Test API'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

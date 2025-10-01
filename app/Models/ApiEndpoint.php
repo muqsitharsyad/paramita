@@ -16,15 +16,18 @@ class ApiEndpoint extends Model
         'method',
         'description',
         'parameters',
-        'response_format',
-        'requires_auth',
         'status',
+        'health_status',
+        'last_tested_at',
+        'health_message',
+        'requires_auth',
+        'json_template_id',
     ];
 
     protected $casts = [
         'parameters' => 'array',
-        'response_format' => 'array',
         'requires_auth' => 'boolean',
+        'last_tested_at' => 'datetime',
     ];
 
     // Relationships
@@ -36,6 +39,11 @@ class ApiEndpoint extends Model
     public function apiRequests()
     {
         return $this->hasMany(ApiRequest::class);
+    }
+
+    public function jsonTemplate()
+    {
+        return $this->belongsTo(JsonTemplate::class);
     }
 
     // Scopes
@@ -86,6 +94,28 @@ class ApiEndpoint extends Model
         ];
 
         return $colors[$this->method] ?? 'gray';
+    }
+
+    public function getHealthStatusColorAttribute(): string
+    {
+        return match ($this->health_status) {
+            'healthy' => 'success',
+            'unhealthy' => 'danger',
+            'warning' => 'warning',
+            'unknown' => 'gray',
+            default => 'gray',
+        };
+    }
+
+    public function getHealthStatusLabelAttribute(): string
+    {
+        return match ($this->health_status) {
+            'healthy' => 'Healthy',
+            'unhealthy' => 'Unhealthy',
+            'warning' => 'Warning',
+            'unknown' => 'Unknown',
+            default => 'Unknown',
+        };
     }
 
     // Methods
