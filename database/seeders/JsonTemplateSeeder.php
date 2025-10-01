@@ -34,23 +34,67 @@ class JsonTemplateSeeder extends Seeder
                 "data" => [
                     "title" => "{{title}}",
                     "semester" => "{{semester}}",
-                    "summaryCards" => [],
+                    "summaryCards" => [
+                        [
+                            "label" => "{{label}}",
+                            "value" => "{{value}}"
+                        ]
+                    ],
                     "charts" => [
                         "doByDate" => [
-                            "title" => "DO By Date",
+                            "title" => "{{title}}",
+                            "type" => "{{type}}",
                             "dateRange" => [
                                 "start" => "{{date_start}}",
                                 "end" => "{{date_end}}"
                             ],
-                            "zoomOptions" => ["1m", "3m", "6m", "YTD", "1y", "All"],
-                            "data" => []
+                            "zoomOptions" => [
+                                "{{zoom_option}}"
+                            ],
+                            "data" => [
+                                [
+                                    "date" => "{{date}}",
+                                    "do" => "{{do}}"
+                                ]
+                            ]
                         ],
                         "deliveryPercentage" => [
-                            "title" => "Persentase Paket BA Terkirim",
-                            "data" => []
+                            "title" => "{{title}}",
+                            "type" => "{{type}}",
+                            "data" => [
+                                [
+                                    "label" => "{{label}}",
+                                    "value" => "{{value}}"
+                                ]
+                            ]
+                        ],
+                        "DoStatus" => [
+                            "title" => "{{title}}",
+                            "type" => "{{type}}",
+                            "data" => [
+                                [
+                                    "label" => "{{label}}",
+                                    "value" => "{{value}}"
+                                ]
+                            ]
+                        ],
+                        "DoEkspeditur" => [
+                            "title" => "{{title}}",
+                            "type" => "{{type}}",
+                            "data" => [
+                                [
+                                    "label" => "{{label}}",
+                                    "value" => "{{value}}"
+                                ]
+                            ]
                         ]
                     ],
-                    "deliveryStats" => []
+                    "deliveryStats" => [
+                        [
+                            "label" => "{{label}}",
+                            "value" => "{{value}}"
+                        ]
+                    ]
                 ]
             ]
         ]);
