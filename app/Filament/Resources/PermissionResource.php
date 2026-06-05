@@ -18,7 +18,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Support\Str;
 
@@ -72,7 +71,7 @@ class PermissionResource extends Resource
                     ->schema([
                         CheckboxList::make('roles')
                             ->relationship('roles', 'name')
-                            ->options(Role::all()->pluck('name', 'id'))
+                            ->options(fn () => Role::query()->orderBy('name')->pluck('name', 'id'))
                             ->searchable()
                             ->bulkToggleable()
                             ->columns(3)
@@ -141,11 +140,9 @@ class PermissionResource extends Resource
                 
                 SelectFilter::make('roles')
                     ->relationship('roles', 'name')
-                    ->multiple()
-                    ->preload(),
+                    ->multiple(),
             ])
             ->actions([
-                ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make()
                     ->requiresConfirmation()

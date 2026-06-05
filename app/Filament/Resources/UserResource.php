@@ -11,7 +11,6 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
 
 class UserResource extends Resource
 {
@@ -47,9 +46,12 @@ class UserResource extends Resource
 
                         Forms\Components\Select::make('unit_kerja_id')
                             ->label('Unit Kerja')
-                            ->relationship('unitKerja', 'nama')
+                            ->relationship(
+                                name: 'unitKerja',
+                                titleAttribute: 'nama',
+                                modifyQueryUsing: fn (Builder $query) => $query->orderBy('nama')
+                            )
                             ->searchable()
-                            ->preload()
                             ->required(),
                         
                         Forms\Components\Select::make('status')
@@ -93,7 +95,6 @@ class UserResource extends Resource
                             ->label('Role')
                             ->relationship('roles', 'name')
                             ->multiple()
-                            ->preload()
                             ->searchable(),
                     ]),
             ]);
@@ -146,12 +147,10 @@ class UserResource extends Resource
                 Tables\Filters\SelectFilter::make('roles')
                     ->label('Role')
                     ->relationship('roles', 'name')
-                    ->multiple()
-                    ->preload(),
+                    ->multiple(),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
                 ])
@@ -168,6 +167,15 @@ class UserResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'unitKerja:id,nama',
+                'roles:id,name',
+            ]);
     }
 
     public static function getPages(): array

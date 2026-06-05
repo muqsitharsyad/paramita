@@ -4,15 +4,14 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ApiRequestResource\Pages;
 use App\Models\ApiRequest;
-use App\Models\VendorApi;
-use App\Models\ApiEndpoint;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Infolists;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Infolists;
-use Filament\Infolists\Infolist;
+use Illuminate\Database\Eloquent\Builder;
 
 class ApiRequestResource extends Resource
 {
@@ -31,9 +30,12 @@ class ApiRequestResource extends Resource
                 Forms\Components\Section::make('Request Information')
                     ->schema([
                         Forms\Components\Select::make('vendor_api_id')
-                            ->relationship('vendorApi', 'api_name')
+                            ->relationship(
+                                name: 'vendorApi',
+                                titleAttribute: 'api_name',
+                                modifyQueryUsing: fn (Builder $query) => $query->orderBy('api_name')
+                            )
                             ->searchable()
-                            ->preload()
                             ->required()
                             ->label('Vendor API')
                             ->live()
@@ -48,11 +50,11 @@ class ApiRequestResource extends Resource
                                     if ($get('vendor_api_id')) {
                                         $query->where('vendor_api_id', $get('vendor_api_id'));
                                     }
-                                    return $query;
+
+                                    return $query->orderBy('name');
                                 }
                             )
                             ->searchable()
-                            ->preload()
                             ->required()
                             ->label('API Endpoint'),
                         Forms\Components\TextInput::make('request_id')
@@ -214,9 +216,12 @@ class ApiRequestResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('vendor_api_id')
-                    ->relationship('vendorApi', 'api_name')
+                    ->relationship(
+                        'vendorApi',
+                        'api_name',
+                        fn (Builder $query) => $query->orderBy('api_name')
+                    )
                     ->searchable()
-                    ->preload()
                     ->label('Vendor API'),
                 Tables\Filters\SelectFilter::make('method')
                     ->options([
@@ -280,42 +285,10 @@ class ApiRequestResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
-                Tables\Actions\Action::make('retry')
-                    ->icon('heroicon-o-arrow-path')
-                    ->color('warning')
-                    ->action(function (ApiRequest $record) {
-                        // Logic untuk retry request
-                        $record->update([
-                            'status' => 'pending',
-                            'requested_at' => now(),
-                            'responded_at' => null,
-                        ]);
-                    })
-                    ->requiresConfirmation()
-                    ->modalHeading('Retry Request')
-                    ->modalDescription('Are you sure you want to retry this request?')
-                    ->modalSubmitActionLabel('Retry Request')
-                    ->visible(fn (ApiRequest $record) => in_array($record->status, ['failed', 'timeout'])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\BulkAction::make('retry_selected')
-                        ->icon('heroicon-o-arrow-path')
-                        ->color('warning')
-                        ->action(function ($records) {
-                            $records->each(function ($record) {
-                                $record->update([
-                                    'status' => 'pending',
-                                    'requested_at' => now(),
-                                    'responded_at' => null,
-                                ]);
-                            });
-                        })
-                        ->requiresConfirmation()
-                        ->modalHeading('Retry Selected Requests')
-                        ->modalDescription('Are you sure you want to retry all selected requests?')
-                        ->modalSubmitActionLabel('Retry All'),
                 ]),
             ])
             ->defaultSort('requested_at', 'desc');
@@ -433,6 +406,15 @@ class ApiRequestResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'vendorApi:id,api_name',
+                'apiEndpoint:id,name',
+            ]);
     }
 
     public static function getPages(): array

@@ -4,7 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\VendorApiResource\Pages;
 use App\Models\VendorApi;
-use App\Models\Vendor;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -12,6 +11,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Illuminate\Database\Eloquent\Builder;
 
 class VendorApiResource extends Resource
 {
@@ -30,9 +30,12 @@ class VendorApiResource extends Resource
                 Forms\Components\Section::make('API Information')
                     ->schema([
                         Forms\Components\Select::make('vendor_id')
-                            ->relationship('vendor', 'name')
+                            ->relationship(
+                                name: 'vendor',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: fn (Builder $query) => $query->orderBy('name')
+                            )
                             ->searchable()
-                            ->preload()
                             ->required()
                             ->label('Vendor'),
                         Forms\Components\TextInput::make('api_name')
@@ -154,9 +157,6 @@ class VendorApiResource extends Resource
                 // Tables\Columns\TextColumn::make('email')
                 //     ->searchable()
                 //     ->label('Email'),
-                Tables\Columns\TextColumn::make('password')
-                    ->label('Password')
-                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\BadgeColumn::make('auth_type')
                     ->colors([
                         'secondary' => 'none',
@@ -189,9 +189,12 @@ class VendorApiResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('vendor_id')
-                    ->relationship('vendor', 'name')
+                    ->relationship(
+                        'vendor',
+                        'name',
+                        fn (Builder $query) => $query->orderBy('name')
+                    )
                     ->searchable()
-                    ->preload()
                     ->label('Vendor'),
                 Tables\Filters\SelectFilter::make('auth_type')
                     ->options([
@@ -241,8 +244,6 @@ class VendorApiResource extends Resource
                             ->label('Version'),
                         Infolists\Components\TextEntry::make('email')
                             ->label('Email'),
-                        Infolists\Components\TextEntry::make('password')
-                            ->label('Password'),
                         Infolists\Components\TextEntry::make('status')
                             ->badge()
                             ->color(fn (string $state): string => match ($state) {
@@ -318,6 +319,12 @@ class VendorApiResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['vendor:id,name']);
     }
 
     public static function getPages(): array

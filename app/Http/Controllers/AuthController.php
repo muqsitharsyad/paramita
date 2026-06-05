@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\RoleHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
 
 class AuthController extends Controller
 {
     public function showLoginForm()
     {
+        if (Auth::check()) {
+            return $this->redirectToRole();
+        }
         return view('auth.login');
     }
 
@@ -22,9 +25,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            $user = Auth::user();
-            // Redirect to the last intended URL or to home if no previous URL stored
-            return redirect()->intended('/home');
+            return $this->redirectToRole();
         }
 
         return back()->withErrors([
@@ -38,5 +39,25 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect('/login');
+    }
+
+    private function redirectToRole()
+    {
+        $user = Auth::user();
+        $homeRoute = RoleHelper::getUserHomeRoute($user);
+
+        if ($homeRoute) {
+            // Jika starts with '/', anggap URL, bukan route name
+            if (str_starts_with($homeRoute, '/')) {
+                return redirect()->to($homeRoute);
+            }
+            return redirect()->route($homeRoute);
+        }
+
+        // No role assigned
+        Auth::logout();
+        return redirect()->route('login')->withErrors([
+            'email' => 'Akun Anda belum memiliki role yang sesuai.',
+        ]);
     }
 }

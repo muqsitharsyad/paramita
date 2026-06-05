@@ -37,7 +37,7 @@ class VendorApiAuthHelper
                     return $client->withToken($token);
                 }
             } else {
-                Log::error('Login failed for vendor API: ' . $vendorApi->name);
+                Log::error('Login failed for vendor API: ' . $vendorApi->api_name);
             }
         }
         return null;

@@ -16,7 +16,6 @@ use Filament\Forms\Components\CheckboxList;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Support\Collection;
@@ -48,7 +47,7 @@ class RolePermissionResource extends Resource
                     ->schema([
                         Select::make('role_id')
                             ->label('Role')
-                            ->options(Role::all()->pluck('name', 'id'))
+                            ->options(fn () => static::roleOptions())
                             ->required()
                             ->searchable()
                             ->live()
@@ -63,7 +62,7 @@ class RolePermissionResource extends Resource
 
                         CheckboxList::make('permissions')
                             ->label('Permissions')
-                            ->options(Permission::all()->pluck('name', 'id'))
+                            ->options(fn () => static::permissionOptions())
                             ->searchable()
                             ->bulkToggleable()
                             ->columns(3)
@@ -149,7 +148,7 @@ class RolePermissionResource extends Resource
 
                                 CheckboxList::make('permissions')
                                     ->label('Permissions')
-                                    ->options(Permission::all()->pluck('name', 'id'))
+                                    ->options(fn () => static::permissionOptions())
                                     ->default(function (Role $record) {
                                         return $record->permissions->pluck('id')->toArray();
                                     })
@@ -187,7 +186,6 @@ class RolePermissionResource extends Resource
                             ->send();
                     }),
 
-                ViewAction::make(),
                 EditAction::make()
                     ->form([
                         Forms\Components\Section::make('Role Information')
@@ -207,7 +205,7 @@ class RolePermissionResource extends Resource
                             ->schema([
                                 CheckboxList::make('permissions')
                                     ->relationship('permissions', 'name')
-                                    ->options(Permission::all()->pluck('name', 'id'))
+                                    ->options(fn () => static::permissionOptions())
                                     ->searchable()
                                     ->bulkToggleable()
                                     ->columns(3)
@@ -224,7 +222,7 @@ class RolePermissionResource extends Resource
                         ->form([
                             CheckboxList::make('permissions')
                                 ->label('Permissions to Assign')
-                                ->options(Permission::all()->pluck('name', 'id'))
+                                ->options(fn () => static::permissionOptions())
                                 ->searchable()
                                 ->bulkToggleable()
                                 ->columns(3)
@@ -249,7 +247,7 @@ class RolePermissionResource extends Resource
                         ->form([
                             CheckboxList::make('permissions')
                                 ->label('Permissions to Remove')
-                                ->options(Permission::all()->pluck('name', 'id'))
+                                ->options(fn () => static::permissionOptions())
                                 ->searchable()
                                 ->bulkToggleable()
                                 ->columns(3)
@@ -290,11 +288,26 @@ class RolePermissionResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+            ->with(['permissions'])
             ->withCount(['permissions', 'users']);
     }
 
     public static function canCreate(): bool
     {
         return false;
+    }
+
+    private static function permissionOptions()
+    {
+        return Permission::query()
+            ->orderBy('name')
+            ->pluck('name', 'id');
+    }
+
+    private static function roleOptions()
+    {
+        return Role::query()
+            ->orderBy('name')
+            ->pluck('name', 'id');
     }
 }

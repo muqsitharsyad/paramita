@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\RoleHelper;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -35,8 +36,11 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->belongsTo(UnitKerja::class);
     }
+
     public function canAccessPanel(Panel $panel): bool
     {
-    return $this->hasRole('admin');
+        $role = RoleHelper::getPrimaryRoleName($this);
+
+        return $role && RoleHelper::canAccessPanel($role, $panel->getId());
     }
 }

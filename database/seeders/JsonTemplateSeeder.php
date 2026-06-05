@@ -13,7 +13,7 @@ class JsonTemplateSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get first user as creator
+        // Get first user as creator — or create a placeholder
         $user = User::first();
         $userId = $user ? $user->id : null;
 
@@ -241,6 +241,44 @@ class JsonTemplateSeeder extends Seeder
                 "data" => [],
                 "read" => false,
                 "created_at" => "{{timestamp}}"
+            ]
+        ]);
+
+        // Monitoring Stock Template
+        JsonTemplate::create([
+            'name' => 'monitoring-stock',
+            'category' => 'api-response',
+            'description' => 'Template for monitoring stock of teaching materials (bahan ajar)',
+            'version' => '1.0',
+            'is_active' => true,
+            'created_by' => $userId,
+            'updated_by' => $userId,
+            'template_data' => [
+                "status" => "{{status}}",
+                "code" => "{{code}}",
+                "message" => "{{message}}",
+                "data" => [
+                    [
+                        "no" => "{{no}}",
+                        "kode_buku" => "{{kode_buku}}",
+                        "edisi" => "{{edisi}}",
+                        "judul" => "{{judul}}",
+                        "ukuran_buku" => "{{ukuran_buku}}",
+                        "stok" => "{{stok}}",
+                        "berat_buku" => "{{berat_buku}}",
+                        "total_berat" => "{{total_berat}}",
+                        "total_tinggi" => "{{total_tinggi}}",
+                        "total_luas_area" => "{{total_luas_area}}",
+                        "penyedia" => "{{penyedia}}"
+                    ]
+                ],
+                "pagination" => [
+                    "limit" => "{{limit}}",
+                    "offset" => "{{offset}}",
+                    "total" => "{{total}}",
+                    "next_offset" => "{{next_offset}}",
+                    "prev_offset" => "{{prev_offset}}"
+                ]
             ]
         ]);
     }

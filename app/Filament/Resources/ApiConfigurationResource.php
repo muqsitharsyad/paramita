@@ -4,14 +4,14 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ApiConfigurationResource\Pages;
 use App\Models\ApiConfiguration;
-use App\Models\VendorApi;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Infolists;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Infolists;
-use Filament\Infolists\Infolist;
+use Illuminate\Database\Eloquent\Builder;
 
 class ApiConfigurationResource extends Resource
 {
@@ -30,9 +30,12 @@ class ApiConfigurationResource extends Resource
                 Forms\Components\Section::make('Configuration Information')
                     ->schema([
                         Forms\Components\Select::make('vendor_api_id')
-                            ->relationship('vendorApi', 'api_name')
+                            ->relationship(
+                                name: 'vendorApi',
+                                titleAttribute: 'api_name',
+                                modifyQueryUsing: fn (Builder $query) => $query->orderBy('api_name')
+                            )
                             ->searchable()
-                            ->preload()
                             ->required()
                             ->label('Vendor API'),
                         Forms\Components\TextInput::make('config_key')
@@ -151,9 +154,12 @@ class ApiConfigurationResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('vendor_api_id')
-                    ->relationship('vendorApi', 'api_name')
+                    ->relationship(
+                        'vendorApi',
+                        'api_name',
+                        fn (Builder $query) => $query->orderBy('api_name')
+                    )
                     ->searchable()
-                    ->preload()
                     ->label('Vendor API'),
                 Tables\Filters\SelectFilter::make('data_type')
                     ->options([
@@ -171,18 +177,6 @@ class ApiConfigurationResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
-                Tables\Actions\Action::make('copy_value')
-                    ->icon('heroicon-o-clipboard')
-                    ->color('info')
-                    ->action(function (ApiConfiguration $record) {
-                        // Logic untuk copy value ke clipboard
-                        // Ini hanya untuk non-sensitive data
-                    })
-                    ->visible(fn (ApiConfiguration $record) => !$record->is_sensitive)
-                    ->requiresConfirmation()
-                    ->modalHeading('Copy Configuration Value')
-                    ->modalDescription('Are you sure you want to copy this configuration value?')
-                    ->modalSubmitActionLabel('Copy Value'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -261,6 +255,12 @@ class ApiConfigurationResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['vendorApi:id,api_name']);
     }
 
     public static function getPages(): array

@@ -1,192 +1,146 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
-
 # Paramita
 
-Paramita adalah aplikasi web yang dibangun menggunakan Laravel framework. Aplikasi ini dikembangkan untuk [jelaskan tujuan/fungsi aplikasi Anda di sini].
+Paramita is a Laravel 12 + Filament 3.3 API Gateway Management System for managing vendor APIs, validating JSON responses, monitoring endpoint health, and serving role-based Dynamic Pages.
 
-## Tentang Paramita
+## Core Features
 
-Paramita menyediakan fitur-fitur berikut:
+- Filament admin panel for vendor, API, endpoint, template, RBAC, and sidebar management
+- Dynamic Pages at `/page/{slug}` driven from database configuration
+- role-based access control with Spatie Laravel Permission
+- endpoint testing with template-based response validation
+- API request logging and health status tracking
+- database-driven sidebar navigation
 
--   [Daftar fitur utama aplikasi]
--   [Fitur kedua]
--   [Fitur ketiga]
+## Current Architecture
 
-## Teknologi yang Digunakan
+### Admin Surface
 
--   **Backend**: Laravel 11
--   **Database**: MySQL
--   **Frontend**: Blade Templates, Bootstrap/CSS
--   **Server**: Apache/Nginx
+- admin users access Filament at `/admin`
 
-## Persyaratan Sistem
+### User Surface
 
--   PHP >= 8.1
--   Composer
--   MySQL/MariaDB
--   Node.js & NPM (untuk asset compilation)
--   Apache/Nginx web server
+- non-admin users are redirected to Dynamic Pages
+- default user landing page is `/page/dashboard`
+- user navigation is read from `sidebar_menu_items`
 
-## Cara Instalasi
+### Runtime Direction
 
-Ikuti langkah-langkah berikut untuk menginstall aplikasi setelah melakukan clone repository:
+The project no longer uses legacy role-specific dashboards such as:
 
-### 1. Clone Repository
+- `manager/*`
+- `operator/*`
+- `viewer/*`
+
+Those flows have been replaced by:
+
+- `config/roles.php`
+- `DynamicPageController`
+- `pages`, `page_role`, and `page_template`
+- `sidebar_menu_items`
+
+## Tech Stack
+
+- PHP 8.2+
+- Laravel 12
+- Filament 3.3
+- Spatie Laravel Permission 6
+- MySQL or MariaDB
+- Blade + Livewire
+
+## Installation
 
 ```bash
-git clone https://github.com/username/paramita.git
+git clone <repo-url>
 cd paramita
-```
-
-### 2. Install Dependencies
-
-```bash
-# Install PHP dependencies
 composer install
-
-# Install Node.js dependencies
 npm install
-```
-
-### 3. Environment Setup
-
-```bash
-# Copy file environment
-cp .env.example .env
-
-# Generate application key
+copy .env.example .env
 php artisan key:generate
 ```
 
-### 4. Database Configuration
-
-Edit file `.env` dan sesuaikan konfigurasi database:
-
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=paramita
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
-```
-
-### 5. Database Migration & Seeding
+Update `.env` with your database credentials, then run:
 
 ```bash
-# Buat database baru di MySQL
-# Kemudian jalankan migration
-php artisan migrate
-
-# (Opsional) Jalankan seeder untuk data awal
-php artisan db:seed
-```
-
-### 6. Storage Link
-
-```bash
-# Buat symbolic link untuk storage
+php artisan migrate:fresh --seed
 php artisan storage:link
-```
-
-### 7. Compile Assets
-
-```bash
-# Development
-npm run dev
-
-# Production
 npm run build
 ```
 
-### 8. Jalankan Aplikasi
+For local development:
 
 ```bash
-# Menggunakan built-in server Laravel
-php artisan serve
-
-# Atau akses melalui web server (Apache/Nginx)
-# http://localhost/paramita/public
+composer run dev
 ```
 
-## Konfigurasi Tambahan
+## Seeded Accounts
 
-### Cache Configuration
+After `migrate:fresh --seed`, these users are available:
+
+| Email | Role | Password |
+|-------|------|----------|
+| `admin@paramita.com` | `admin` | `password` |
+| `pusat@paramita.com` | `pimpinan-pusat` | `password` |
+| `daerah@paramita.com` | `pimpinan-daerah` | `password` |
+| `viewer@paramita.com` | `viewer` | `password` |
+
+## Important Routes
+
+| Route | Purpose |
+|------|---------|
+| `/login` | application login |
+| `/admin` | Filament admin dashboard |
+| `/page/{slug}` | Dynamic Page runtime |
+| `/home` | role-aware redirect |
+
+## Seeder Output
+
+Fresh seed creates:
+
+- roles and permissions
+- sample users
+- JSON templates including `monitoring-stock`
+- sample vendor and vendor API
+- sample endpoint linked to a template
+- Dynamic Pages:
+  - `/page/dashboard`
+  - `/page/monitoring-stock`
+- default sidebar menu items for those pages
+
+## Performance Notes
+
+Applied optimization direction:
+
+- strict model mode in non-production to catch lazy loading
+- explicit eager loading in Filament resources
+- narrower relation columns where possible
+- deferred loading for large searchable relation selects
+- cached and pooled remote fetches in `DynamicPageController`
+
+Recommended environment defaults:
+
+```env
+SESSION_DRIVER=file
+CACHE_STORE=file
+```
+
+## Testing
+
+Common verification commands:
 
 ```bash
-# Clear cache
-php artisan cache:clear
-php artisan config:clear
-php artisan route:clear
-php artisan view:clear
-
-# Optimize untuk production
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+php artisan route:list
+php artisan test
 ```
 
-### File Permissions (Linux/Mac)
+Note:
 
-```bash
-chmod -R 755 storage
-chmod -R 755 bootstrap/cache
-```
+- `php artisan test` requires a working test database
+- if your PHP CLI does not have `pdo_sqlite`, feature tests that rely on SQLite will fail until that extension is enabled or the test database is changed
 
-## Penggunaan
+## Project Reference
 
-1. Akses aplikasi melalui browser di `http://localhost:8000` (jika menggunakan `php artisan serve`)
-2. [Tambahkan instruksi penggunaan aplikasi]
+Detailed architecture and maintenance notes live in:
 
-## Kontribusi
+- `AGENTS.md`
 
-Jika Anda ingin berkontribusi pada project ini:
-
-1. Fork repository ini
-2. Buat branch untuk fitur baru (`git checkout -b fitur-baru`)
-3. Commit perubahan (`git commit -am 'Menambah fitur baru'`)
-4. Push ke branch (`git push origin fitur-baru`)
-5. Buat Pull Request
-
-## Troubleshooting
-
-### Error "Permission denied"
-
-```bash
-# Linux/Mac
-sudo chown -R $USER:www-data storage
-sudo chown -R $USER:www-data bootstrap/cache
-```
-
-### Error "Key not found"
-
-```bash
-php artisan key:generate
-```
-
-### Error Database Connection
-
--   Pastikan MySQL service berjalan
--   Cek konfigurasi database di file `.env`
--   Pastikan database sudah dibuat
-
-## Lisensi
-
-Project ini menggunakan lisensi [MIT License](https://opensource.org/licenses/MIT).
-
-## Kontak
-
--   **Developer**: [Nama Anda]
--   **Email**: [email@example.com]
--   **GitHub**: [https://github.com/username](https://github.com/username)
-
----
-
-<p align="center">Dibuat dengan ❤️ menggunakan Laravel</p>
+Use that file as the current internal reference before changing routes, RBAC behavior, Dynamic Pages, or Filament resources.

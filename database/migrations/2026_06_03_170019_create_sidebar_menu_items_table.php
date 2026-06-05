@@ -1,0 +1,28 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('sidebar_menu_items', function (Blueprint $table) {
+            $table->id();
+            $table->string('label');
+            $table->string('icon')->nullable()->comment('Icon key: dashboard, templates, vendors, monitoring, reports');
+            $table->string('route_name')->nullable()->comment('Laravel route name (e.g., filament.admin.resources.pages.index)');
+            $table->string('url')->nullable()->comment('Fallback URL if no route_name');
+            $table->foreignId('parent_id')->nullable()->constrained('sidebar_menu_items')->cascadeOnDelete();
+            $table->unsignedSmallInteger('order')->default(0);
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('sidebar_menu_items');
+    }
+};

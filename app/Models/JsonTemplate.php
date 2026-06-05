@@ -30,6 +30,24 @@ class JsonTemplate extends Model
     ];
 
     /**
+     * API endpoints using this template
+     */
+    public function endpoints()
+    {
+        return $this->hasMany(ApiEndpoint::class, 'json_template_id');
+    }
+
+    /**
+     * Pages that use this template
+     */
+    public function pages()
+    {
+        return $this->belongsToMany(Page::class, 'page_template')
+            ->withPivot('display_order')
+            ->withTimestamps();
+    }
+
+    /**
      * Get the creator of this template
      */
     public function creator()
@@ -59,63 +77,5 @@ class JsonTemplate extends Model
     public function scopeCategory($query, $category)
     {
         return $query->where('category', $category);
-    }
-
-    /**
-     * Get template data with merged variables
-     */
-    public function getFormattedTemplate(array $variables = [])
-    {
-        $template = $this->template_data;
-        
-        if (!empty($variables)) {
-            $template = $this->replaceVariables($template, $variables);
-        }
-        
-        return $template;
-    }
-
-    /**
-     * Replace variables in template recursively
-     */
-    private function replaceVariables($data, array $variables)
-    {
-        if (is_array($data)) {
-            foreach ($data as $key => $value) {
-                $data[$key] = $this->replaceVariables($value, $variables);
-            }
-        } elseif (is_string($data)) {
-            foreach ($variables as $var => $value) {
-                $data = str_replace('{{' . $var . '}}', $value, $data);
-            }
-        }
-        
-        return $data;
-    }
-
-    /**
-     * Get template by name and category
-     */
-    public static function getTemplate($name, $category = null)
-    {
-        $query = static::active()->where('name', $name);
-        
-        if ($category) {
-            $query->where('category', $category);
-        }
-        
-        return $query->first();
-    }
-
-    /**
-     * Create a new version of existing template
-     */
-    public function createNewVersion()
-    {
-        $newVersion = $this->replicate();
-        $newVersion->version = $this->version + 1;
-        $newVersion->save();
-        
-        return $newVersion;
     }
 }

@@ -4,7 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\JsonTemplateResource\Pages;
 use App\Models\JsonTemplate;
-use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -12,11 +11,12 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Grid;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Illuminate\Support\Facades\Auth;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Section;
+use Illuminate\Support\Str;
 
 class JsonTemplateResource extends Resource
 {
@@ -46,18 +46,19 @@ class JsonTemplateResource extends Resource
                                     ->helperText('Unique name for this template (e.g., dashboard, user-profile)')
                                     ->placeholder('dashboard'),
                                 
-                                // Forms\Components\Select::make('category')
-                                //     ->required()
-                                //     ->options([
-                                //         'api-response' => 'API Response',
-                                //         'dashboard' => 'Dashboard',
-                                //         'report' => 'Report',
-                                //         'notification' => 'Notification',
-                                //         'configuration' => 'Configuration',
-                                //         'other' => 'Other',
-                                //     ])
-                                //     ->label('Category')
-                                //     ->helperText('Category to group similar templates'),
+                                Forms\Components\Select::make('category')
+                                    ->required()
+                                    ->options([
+                                        'api-response' => 'API Response',
+                                        'dashboard' => 'Dashboard',
+                                        'report' => 'Report',
+                                        'notification' => 'Notification',
+                                        'configuration' => 'Configuration',
+                                        'other' => 'Other',
+                                    ])
+                                    ->label('Category')
+                                    ->helperText('Category to group similar templates')
+                                    ->default('api-response'),
                             ]),
                         
                         Forms\Components\Textarea::make('description')
@@ -141,16 +142,16 @@ class JsonTemplateResource extends Resource
                     ->label('Template Name')
                     ->weight('bold'),
                 
-                // Tables\Columns\BadgeColumn::make('category')
-                //     ->colors([
-                //         'primary' => 'api-response',
-                //         'success' => 'dashboard',
-                //         'warning' => 'report',
-                //         'danger' => 'notification',
-                //         'secondary' => 'configuration',
-                //         'gray' => 'other',
-                //     ])
-                //     ->sortable(),
+                Tables\Columns\TextColumn::make('category')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'api-response' => 'primary',
+                        'dashboard' => 'success',
+                        'report' => 'warning',
+                        'notification' => 'danger',
+                        default => 'gray',
+                    })
+                    ->sortable(),
                 
                 Tables\Columns\TextColumn::make('description')
                     ->limit(50)
@@ -193,15 +194,15 @@ class JsonTemplateResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                // SelectFilter::make('category')
-                //     ->options([
-                //         'api-response' => 'API Response',
-                //         'dashboard' => 'Dashboard',
-                //         'report' => 'Report',
-                //         'notification' => 'Notification',
-                //         'configuration' => 'Configuration',
-                //         'other' => 'Other',
-                //     ]),
+                SelectFilter::make('category')
+                    ->options([
+                        'api-response' => 'API Response',
+                        'dashboard' => 'Dashboard',
+                        'report' => 'Report',
+                        'notification' => 'Notification',
+                        'configuration' => 'Configuration',
+                        'other' => 'Other',
+                    ]),
                 
                 SelectFilter::make('is_active')
                     ->label('Status')
@@ -213,14 +214,13 @@ class JsonTemplateResource extends Resource
                 TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\Action::make('duplicate')
                     ->icon('heroicon-o-document-duplicate')
                     ->action(function (JsonTemplate $record) {
                         $newTemplate = $record->replicate();
-                        $newTemplate->name = $record->name . ' (Copy)';
+                        $newTemplate->name = static::makeUniqueCopyName($record->name);
                         $newTemplate->created_by = Auth::id();
                         $newTemplate->updated_by = Auth::id();
                         $newTemplate->save();
@@ -246,7 +246,8 @@ class JsonTemplateResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->with(['creator:id,name', 'updater:id,name']);
     }
 
     public static function getPages(): array
@@ -256,5 +257,19 @@ class JsonTemplateResource extends Resource
             'create' => Pages\CreateJsonTemplate::route('/create'),
             'edit' => Pages\EditJsonTemplate::route('/{record}/edit'),
         ];
+    }
+
+    private static function makeUniqueCopyName(string $name): string
+    {
+        $baseName = $name . ' (Copy)';
+        $candidate = $baseName;
+        $counter = 2;
+
+        while (JsonTemplate::query()->where('name', $candidate)->exists()) {
+            $candidate = $baseName . ' ' . $counter;
+            $counter++;
+        }
+
+        return $candidate;
     }
 }
