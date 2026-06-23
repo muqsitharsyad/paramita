@@ -10,6 +10,8 @@ Paramita is a Laravel 12 + Filament 3.3 API Gateway Management System for managi
 - endpoint testing with template-based response validation
 - API request logging and health status tracking
 - database-driven sidebar navigation
+- database-managed sidebar icons
+- user unit kerja context stored in session for page/query use
 
 ## Current Architecture
 
@@ -22,6 +24,7 @@ Paramita is a Laravel 12 + Filament 3.3 API Gateway Management System for managi
 - non-admin users are redirected to Dynamic Pages
 - default user landing page is `/page/dashboard`
 - user navigation is read from `sidebar_menu_items`
+- user sidebar footer shows the user's role and unit kerja
 
 ### Runtime Direction
 
@@ -98,6 +101,7 @@ composer install
 npm install
 php artisan migrate --seed
 php artisan optimize:clear
+php artisan filament:clear-cached-components
 npm run build
 ```
 
@@ -112,12 +116,23 @@ After `migrate:fresh --seed`, these users are available:
 | `daerah@paramita.com` | `pimpinan-daerah` | `password` |
 | `viewer@paramita.com` | `viewer` | `password` |
 
+Seeded unit kerja mapping:
+
+| Email | Unit Kerja |
+|-------|------------|
+| `admin@paramita.com` | `UT Pusat` (`UN31`) |
+| `pusat@paramita.com` | `UT Pusat` (`UN31`) |
+| `daerah@paramita.com` | `UT Bandung` (`UN31.UT15`) |
+| `viewer@paramita.com` | `UT Yogyakarta` (`UN31.UT19`) |
+
 ## Important Routes
 
 | Route | Purpose |
 |------|---------|
 | `/login` | application login |
 | `/admin` | Filament admin dashboard |
+| `/admin/sidebar-icons` | manage custom sidebar icons |
+| `/admin/sidebar-menu-items` | manage dynamic sidebar menu |
 | `/page/{slug}` | Dynamic Page runtime |
 | `/home` | role-aware redirect |
 
@@ -126,6 +141,7 @@ After `migrate:fresh --seed`, these users are available:
 Fresh seed creates:
 
 - roles and permissions
+- 41 unit kerja records: `UT Pusat` (`UN31`) plus `UN31.UT1` to `UN31.UT40`
 - sample users
 - JSON templates including `dashboard` and `monitoring-stock`
 - sample vendor and vendor API
@@ -137,6 +153,38 @@ Fresh seed creates:
   - `/page/monitoring-stock`
 - default sidebar menu items for those pages
 
+## Sidebar Icons
+
+Built-in icons live in:
+
+- `config/sidebar-icons.php`
+
+Admins can add custom icons from:
+
+- `/admin/sidebar-icons`
+
+SVG input format:
+
+```xml
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <path d="..." />
+</svg>
+```
+
+Custom icon keys are available in `Sidebar Menu > Icon`. If a custom key matches a built-in key, the custom SVG is used.
+
+## Unit Kerja Context
+
+Each user belongs to a `unit_kerja`. On login and Dynamic Page access, the current unit is attached to the session:
+
+```php
+session('unit_kerja.id')
+session('unit_kerja.nama')
+session('unit_kerja.kode')
+```
+
+Dynamic Page sections also receive the current unit as `$section['unit_kerja']` for future query logic.
+
 ## Performance Notes
 
 Applied optimization direction:
@@ -146,7 +194,9 @@ Applied optimization direction:
 - narrower relation columns where possible
 - searchable relation selects preload their first options for better admin UX
 - cached and pooled remote fetches in `DynamicPageController`
-- Dynamic Pages pass `limit`, `offset`, and `search` query parameters to endpoint URLs
+- Dynamic Pages pass per-template `limit`, `offset`, and `search` query parameters to endpoint URLs
+- Dynamic Page search, reset, next, and previous actions update content with `fetch()` without full page reload
+- endpoint responses with top-level `total`, `filtered`, `limit`, and `offset` are normalized into pagination controls
 
 Recommended environment defaults:
 

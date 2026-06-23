@@ -19,6 +19,8 @@ Current direction:
 - admin users work through Filament
 - non-admin users use Dynamic Pages at `/page/{slug}`
 - sidebar navigation is database-driven
+- sidebar icon options are database-extendable from Filament
+- authenticated user unit kerja is attached to session/page context
 - legacy role-specific page stacks are removed
 
 ---
@@ -31,6 +33,7 @@ Current direction:
 - `/` redirects authenticated users to their configured home route
 - `/home` mirrors the same redirect logic
 - non-admin home routes are URL-based, not controller-based
+- login stores `session('unit_kerja')` with `id`, `nama`, and `kode`
 
 ### Dynamic Route Surface
 
@@ -97,9 +100,11 @@ Each page:
 - is assigned to one or more roles
 - may render one or more JSON templates
 - fetches live data from endpoint-linked templates
-- passes `limit`, `offset`, and `search` query parameters through to endpoint URLs when present
-- renders pagination controls when upstream responses include `prev_offset` or `next_offset`
-- supports simple table search on rendered array data
+- passes per-template `limit`, `offset`, and `search` query parameters through to endpoint URLs when present
+- normalizes endpoint pagination from either `pagination` or top-level `total` / `filtered` / `limit` / `offset`
+- renders pagination controls when upstream response can provide previous/next offsets
+- updates search/reset/next/previous results with `fetch()` without a full page reload
+- includes current user unit kerja on each rendered section as `unit_kerja`
 
 ### Controller Optimizations
 
@@ -109,6 +114,7 @@ Each page:
 - uses endpoint `full_url` so query-string paths work consistently with endpoint testing
 - uses `Http::pool()` for multi-template requests
 - caches fetched template payloads for 30 seconds per endpoint/query-parameter combination
+- stores current user unit kerja in the session on Dynamic Page access
 - degrades gracefully when one upstream request fails
 
 ---
@@ -121,11 +127,15 @@ Tables:
 
 - `sidebar_menu_items`
 - `sidebar_menu_item_role`
+- `sidebar_icons`
 
 Important files:
 
 - `app/Models/SidebarMenuItem.php`
+- `app/Models/SidebarIcon.php`
 - `app/Filament/Resources/SidebarMenuItemResource.php`
+- `app/Filament/Resources/SidebarIconResource.php`
+- `config/sidebar-icons.php`
 - `resources/views/partials/sidebar-nav.blade.php`
 - `database/seeders/SidebarMenuSeeder.php`
 
@@ -134,6 +144,9 @@ Current behavior:
 - menu tree is filtered by role and `is_active`
 - child items are filtered correctly, not only roots
 - active state works for both `route_name` and URL-based items
+- built-in sidebar icons come from `config/sidebar-icons.php`
+- custom sidebar icons are managed at `/admin/sidebar-icons`
+- custom icon SVGs override built-in SVGs when keys match
 - default seeded menu points to Dynamic Pages only
 
 Default seeded items:
@@ -150,6 +163,13 @@ Default seeded items:
 ### Resource Query Strategy
 
 All major Filament resources use explicit query shaping to avoid lazy loading and oversized payloads.
+
+Navigation groups are ordered as:
+
+1. User Management: Users, Unit Kerja, Roles, Permissions, Role Permissions
+2. System Management: Sidebar Icons, Sidebar Menu, Dynamic Pages
+3. Vendor Management: Vendors, Vendor APIs
+4. API Management: JSON Templates, API Endpoints, API Requests, API Configurations
 
 Current pattern:
 
@@ -253,6 +273,7 @@ RolePermissionSeeder -> JsonTemplateSeeder -> DatabaseDefaultSeeder -> SidebarMe
 What fresh seed produces:
 
 - 4 roles
+- 41 unit kerja records: `UT Pusat` (`UN31`) plus `UN31.UT1` through `UN31.UT40`
 - 4 sample users
 - JSON templates including `dashboard` and `monitoring-stock`
 - 1 sample vendor
@@ -271,6 +292,15 @@ Sample users:
 | `pusat@paramita.com` | `pimpinan-pusat` | `password` |
 | `daerah@paramita.com` | `pimpinan-daerah` | `password` |
 | `viewer@paramita.com` | `viewer` | `password` |
+
+Seeded sample user unit mapping:
+
+| Email | Unit Kerja |
+|-------|------------|
+| `admin@paramita.com` | `UT Pusat` (`UN31`) |
+| `pusat@paramita.com` | `UT Pusat` (`UN31`) |
+| `daerah@paramita.com` | `UT Bandung` (`UN31.UT15`) |
+| `viewer@paramita.com` | `UT Yogyakarta` (`UN31.UT19`) |
 
 ---
 
@@ -327,6 +357,13 @@ Relevant test files:
 - `tests/Feature/SidebarMenuItemTest.php`
 - `tests/Feature/ApiEndpointResourceTest.php`
 - `tests/Feature/PageResourceTest.php`
+
+If new Filament resources do not appear after pulling changes, run:
+
+```bash
+php artisan optimize:clear
+php artisan filament:clear-cached-components
+```
 
 ---
 

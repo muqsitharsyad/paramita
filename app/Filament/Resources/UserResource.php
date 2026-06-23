@@ -17,8 +17,8 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
     protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $navigationLabel = 'Users';
-    protected static ?string $navigationGroup = 'System Management';
-    protected static ?int $navigationSort = 3;
+    protected static ?string $navigationGroup = 'User Management';
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
@@ -85,6 +85,7 @@ class UserResource extends Resource
                         Forms\Components\TextInput::make('password_confirmation')
                             ->label('Konfirmasi Password')
                             ->password()
+                            ->dehydrated(false)
                             ->same('password')
                             ->required(fn (string $context): bool => $context === 'create'),
                     ])

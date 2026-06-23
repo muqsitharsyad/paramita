@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Spatie\Permission\Models\Role;
 
 class SidebarMenuItem extends Model
@@ -40,6 +42,34 @@ class SidebarMenuItem extends Model
     public function children(): HasMany
     {
         return $this->hasMany(self::class, 'parent_id');
+    }
+
+    public static function iconSvg(?string $icon): HtmlString
+    {
+        $icons = static::icons();
+
+        return new HtmlString($icons[$icon ?: 'info'] ?? $icons['info']);
+    }
+
+    public static function iconOptions(): array
+    {
+        return collect(static::icons())
+            ->mapWithKeys(fn (string $svg, string $key) => [$key => $svg])
+            ->all();
+    }
+
+    private static function icons(): array
+    {
+        $icons = require config_path('sidebar-icons.php');
+
+        if (! Schema::hasTable('sidebar_icons')) {
+            return $icons;
+        }
+
+        return array_replace($icons, SidebarIcon::query()
+            ->where('is_active', true)
+            ->pluck('svg', 'key')
+            ->all());
     }
 
     /**

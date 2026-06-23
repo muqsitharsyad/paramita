@@ -23,7 +23,7 @@ class PageResource extends Resource
 
     protected static ?string $navigationGroup = 'System Management';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $navigationLabel = 'Dynamic Pages';
 

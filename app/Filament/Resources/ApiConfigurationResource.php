@@ -21,7 +21,7 @@ class ApiConfigurationResource extends Resource
 
     protected static ?string $navigationGroup = 'API Management';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 4;
 
     public static function form(Form $form): Form
     {

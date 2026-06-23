@@ -15,8 +15,8 @@ class UnitKerjaResource extends Resource
     protected static ?string $model = UnitKerja::class;
     protected static ?string $navigationIcon = 'heroicon-o-building-office';
     protected static ?string $navigationLabel = 'Unit Kerja';
-    protected static ?string $navigationGroup = 'System Management';
-    protected static ?int $navigationSort = 4;
+    protected static ?string $navigationGroup = 'User Management';
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {

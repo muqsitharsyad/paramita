@@ -22,7 +22,7 @@ class ApiEndpointResource extends Resource
 
     protected static ?string $navigationGroup = 'API Management';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 2;
 
     private const METHOD_OPTIONS = [
         'GET' => 'GET',

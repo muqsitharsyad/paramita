@@ -662,7 +662,13 @@
 <body>
     <!-- Sidebar -->
     @php
-        $role = \App\Helpers\RoleHelper::getPrimaryRoleName(auth()->user()) ?? 'viewer';
+        $currentUser = auth()->user()->loadMissing('unitKerja:id,nama,kode');
+        $role = \App\Helpers\RoleHelper::getPrimaryRoleName($currentUser) ?? 'viewer';
+        $unitKerja = session('unit_kerja') ?: ($currentUser->unitKerja ? [
+            'id' => $currentUser->unitKerja->id,
+            'nama' => $currentUser->unitKerja->nama,
+            'kode' => $currentUser->unitKerja->kode,
+        ] : null);
         $homeRoute = \App\Helpers\RoleHelper::getHomeRoute($role);
         $roleDashboard = '#';
 
@@ -688,10 +694,13 @@
 
         <div class="sidebar-footer">
             <div class="sidebar-user">
-                <div class="sidebar-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</div>
+                <div class="sidebar-avatar">{{ strtoupper(substr($currentUser->name, 0, 2)) }}</div>
                 <div class="sidebar-user-info">
-                    <div class="sidebar-user-name">{{ auth()->user()->name }}</div>
+                    <div class="sidebar-user-name">{{ $currentUser->name }}</div>
                     <div class="sidebar-user-role">{{ \App\Helpers\RoleHelper::getLabel($role) }}</div>
+                    @if($unitKerja)
+                        <div class="sidebar-user-role" title="{{ $unitKerja['kode'] }}" style="color: var(--grey-400);">{{ $unitKerja['nama'] }}</div>
+                    @endif
                 </div>
             </div>
             <form action="{{ route('logout') }}" method="POST" style="margin-top: 12px;">

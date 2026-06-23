@@ -94,6 +94,7 @@
 @endpush
 
 @section('content')
+<div id="dynamic-page-content">
 @if($page->description)
     <div style="margin-bottom: 20px; color: var(--grey-600); font-size: 0.9375rem;">
         {{ $page->description }}
@@ -259,39 +260,35 @@
                         </details>
                     @endif
                 @elseif(count($items) > 0 && isset($items[0]) && is_array($items[0]))
-                    <form method="GET" style="display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;">
-                        @if(request('limit'))
-                            <input type="hidden" name="limit" value="{{ request('limit') }}">
-                        @endif
+                    @php
+                        $templateKey = $tpl->id;
+                        $tableQuery = $section['query_parameters'] ?? [];
+                        $tableSearch = $tableQuery['search'] ?? null;
+                        $resetQuery = request()->query();
+                        unset($resetQuery['search'][$templateKey], $resetQuery['offset'][$templateKey]);
+                        $resetUrl = $resetQuery === [] ? request()->url() : request()->url() . '?' . http_build_query($resetQuery);
+                    @endphp
+                    <form method="GET" data-dynamic-page-form style="display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;">
+                        <input type="hidden" name="limit[{{ $templateKey }}]" value="{{ $tableQuery['limit'] ?? 10 }}">
                         <input
                             type="search"
-                            name="search"
-                            value="{{ request('search') }}"
+                            name="search[{{ $templateKey }}]"
+                            value="{{ $tableSearch }}"
                             placeholder="Cari data..."
                             style="min-width: 240px; flex: 1; max-width: 420px; border: 1px solid var(--grey-300); border-radius: 8px; padding: 8px 12px; font: inherit; color: var(--grey-800);"
                         >
                         <button type="submit" class="btn btn-primary btn-sm">Search</button>
-                        @if(request('search'))
-                            <a href="{{ request()->url() . (request('limit') ? ('?limit=' . urlencode(request('limit'))) : '') }}" class="btn btn-secondary btn-sm">Reset</a>
+                        @if(filled($tableSearch))
+                            <a href="{{ $resetUrl }}" data-dynamic-page-link class="btn btn-secondary btn-sm">Reset</a>
                         @endif
                     </form>
 
-                    @php
-                        if (filled(request('search'))) {
-                            $keyword = str(request('search'))->lower()->toString();
-                            $items = collect($items)
-                                ->filter(fn ($item) => str(json_encode($item, JSON_UNESCAPED_UNICODE))->lower()->contains($keyword))
-                                ->values()
-                                ->all();
-                        }
-
-                        $totalItems = count($items);
-                    @endphp
+                    @php $totalItems = count($items); @endphp
 
                     @if($totalItems === 0)
                         <div class="empty-state">
                             <h3>Data tidak ditemukan</h3>
-                            <p>Tidak ada data yang cocok dengan pencarian "{{ request('search') }}".</p>
+                            <p>Tidak ada data yang cocok dengan pencarian "{{ $tableSearch }}".</p>
                         </div>
                     @else
                     @php
@@ -352,42 +349,51 @@
                     {{-- Pagination Info --}}
                     @if($section['pagination'])
                     @php
-                        $pagination = $section['pagination'];
-                        $limit = $pagination['limit'] ?? request('limit');
+                        $pagination = $section['pagination'] ?? [];
+                        $limit = (int) ($pagination['limit'] ?? ($tableQuery['limit'] ?? 10));
+                        $offset = (int) ($pagination['offset'] ?? ($tableQuery['offset'] ?? 0));
+                        $totalAvailable = (int) ($pagination['total'] ?? count($items));
                         $prevOffset = $pagination['prev_offset'] ?? null;
                         $nextOffset = $pagination['next_offset'] ?? null;
-                        $pageQuery = array_filter([
-                            'limit' => $limit,
-                            'search' => request('search'),
-                        ], fn ($value) => $value !== null && $value !== '');
+                        $pageQuery = request()->query();
+                        $pageQuery['limit'][$templateKey] = $limit;
+
+                        if (filled($tableSearch)) {
+                            $pageQuery['search'][$templateKey] = $tableSearch;
+                        } else {
+                            unset($pageQuery['search'][$templateKey]);
+                        }
+
+                        $prevQuery = $pageQuery;
+                        $nextQuery = $pageQuery;
+
+                        if ($prevOffset !== null) {
+                            $prevQuery['offset'][$templateKey] = $prevOffset;
+                        }
+
+                        if ($nextOffset !== null) {
+                            $nextQuery['offset'][$templateKey] = $nextOffset;
+                        }
                     @endphp
                     <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--grey-200); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
                         <div style="font-size: 0.8125rem; color: var(--grey-600);">
                             Menampilkan {{ count($items) }} item
-                            @if(isset($section['pagination']['total']))
-                                dari {{ number_format($section['pagination']['total']) }} total
-                            @endif
+                            dari {{ number_format($totalAvailable) }} total
                         </div>
                         <div style="font-size: 0.8125rem; color: var(--grey-500); display: flex; gap: 16px; align-items: center;">
-                            @if(isset($section['pagination']['total']))
-                                <span>Total: <strong>{{ $section['pagination']['total'] }}</strong></span>
-                            @endif
-                            @if(isset($section['pagination']['limit']))
-                                <span>Limit: <strong>{{ $section['pagination']['limit'] }}</strong></span>
-                            @endif
-                            @if(isset($section['pagination']['offset']))
-                                <span>Offset: <strong>{{ $section['pagination']['offset'] }}</strong></span>
-                            @endif
+                            <span>Total: <strong>{{ $totalAvailable }}</strong></span>
+                            <span>Limit: <strong>{{ $limit }}</strong></span>
+                            <span>Offset: <strong>{{ $offset }}</strong></span>
                         </div>
                         <div style="display: flex; gap: 8px; align-items: center;">
                             @if($prevOffset !== null)
-                                <a class="btn btn-secondary btn-sm" href="{{ request()->fullUrlWithQuery($pageQuery + ['offset' => $prevOffset]) }}">Prev</a>
+                                <a class="btn btn-secondary btn-sm" data-dynamic-page-link href="{{ request()->url() . '?' . http_build_query($prevQuery) }}">Prev</a>
                             @else
                                 <span class="btn btn-secondary btn-sm" style="opacity: .45; cursor: not-allowed;">Prev</span>
                             @endif
 
                             @if($nextOffset !== null)
-                                <a class="btn btn-primary btn-sm" href="{{ request()->fullUrlWithQuery($pageQuery + ['offset' => $nextOffset]) }}">Next</a>
+                                <a class="btn btn-primary btn-sm" data-dynamic-page-link href="{{ request()->url() . '?' . http_build_query($nextQuery) }}">Next</a>
                             @else
                                 <span class="btn btn-secondary btn-sm" style="opacity: .45; cursor: not-allowed;">Next</span>
                             @endif
@@ -448,4 +454,76 @@
         </div>
     </div>
 @endforelse
+</div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var contentId = 'dynamic-page-content';
+
+    function swapContent(url, push) {
+        var content = document.getElementById(contentId);
+        if (!content) return;
+
+        content.style.opacity = '0.55';
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (response) { return response.text(); })
+            .then(function (html) {
+                var doc = new DOMParser().parseFromString(html, 'text/html');
+                var next = doc.getElementById(contentId);
+                if (!next) {
+                    window.location.href = url;
+                    return;
+                }
+
+                content.innerHTML = next.innerHTML;
+                content.style.opacity = '';
+
+                if (push) history.pushState(null, '', url);
+            })
+            .catch(function () {
+                window.location.href = url;
+            });
+    }
+
+    document.addEventListener('submit', function (event) {
+        var form = event.target.closest('[data-dynamic-page-form]');
+        if (!form) return;
+
+        event.preventDefault();
+
+        var url = new URL(form.action || window.location.href, window.location.origin);
+        var params = new URLSearchParams(window.location.search);
+
+        new FormData(form).forEach(function (value, key) {
+            if (value === '') {
+                params.delete(key);
+                return;
+            }
+
+            params.set(key, value);
+
+            var match = key.match(/^search\[(.+)]$/);
+            if (match) params.delete('offset[' + match[1] + ']');
+        });
+
+        url.search = params.toString();
+        swapContent(url.toString(), true);
+    });
+
+    document.addEventListener('click', function (event) {
+        var link = event.target.closest('[data-dynamic-page-link]');
+        if (!link) return;
+
+        event.preventDefault();
+        swapContent(link.href, true);
+    });
+
+    window.addEventListener('popstate', function () {
+        swapContent(window.location.href, false);
+    });
+});
+</script>
+@endpush

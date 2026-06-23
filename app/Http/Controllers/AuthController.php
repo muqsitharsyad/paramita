@@ -25,6 +25,8 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+            $this->attachUnitKerjaToSession($request);
+
             return $this->redirectToRole();
         }
 
@@ -43,7 +45,7 @@ class AuthController extends Controller
 
     private function redirectToRole()
     {
-        $user = Auth::user();
+        $user = Auth::user()->loadMissing('unitKerja:id,nama,kode');
         $homeRoute = RoleHelper::getUserHomeRoute($user);
 
         if ($homeRoute) {
@@ -59,5 +61,16 @@ class AuthController extends Controller
         return redirect()->route('login')->withErrors([
             'email' => 'Akun Anda belum memiliki role yang sesuai.',
         ]);
+    }
+
+    private function attachUnitKerjaToSession(Request $request): void
+    {
+        $unitKerja = Auth::user()?->loadMissing('unitKerja:id,nama,kode')->unitKerja;
+
+        $request->session()->put('unit_kerja', $unitKerja ? [
+            'id' => $unitKerja->id,
+            'nama' => $unitKerja->nama,
+            'kode' => $unitKerja->kode,
+        ] : null);
     }
 }

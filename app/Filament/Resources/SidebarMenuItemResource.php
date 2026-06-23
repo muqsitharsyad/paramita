@@ -22,7 +22,7 @@ class SidebarMenuItemResource extends Resource
 
     protected static ?string $navigationLabel = 'Sidebar Menu';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
@@ -39,17 +39,11 @@ class SidebarMenuItemResource extends Resource
                                     ->placeholder('e.g., Dashboard'),
                                 Forms\Components\Select::make('icon')
                                     ->label('Icon')
-                                    ->options([
-                                        'dashboard' => 'Dashboard',
-                                        'templates' => 'JSON Templates',
-                                        'vendors' => 'Vendors',
-                                        'monitoring' => 'Monitoring',
-                                        'reports' => 'Reports',
-                                        'settings' => 'Settings',
-                                        'users' => 'Users',
-                                        'link' => 'Link',
-                                    ])
-                                    ->helperText('Pilih icon yang tersedia'),
+                                    ->options(SidebarMenuItem::iconOptions())
+                                    ->allowHtml()
+                                    ->native(false)
+                                    ->searchable()
+                                    ->helperText('Tambah icon baru di config/sidebar-icons.php'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -134,9 +128,8 @@ class SidebarMenuItemResource extends Resource
                     ->sortable()
                     ->weight('bold')
                     ->label('Menu'),
-                Tables\Columns\TextColumn::make('icon')
-                    ->badge()
-                    ->color('gray')
+                Tables\Columns\ViewColumn::make('icon')
+                    ->view('filament.tables.columns.sidebar-icon')
                     ->label('Icon'),
                 Tables\Columns\TextColumn::make('route_name')
                     ->label('Route')

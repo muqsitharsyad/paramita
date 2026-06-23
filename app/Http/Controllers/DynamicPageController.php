@@ -13,7 +13,7 @@ class DynamicPageController extends Controller
 {
     private const RESPONSE_CACHE_SECONDS = 30;
 
-    private const PASSTHROUGH_QUERY_KEYS = ['limit', 'offset', 'search'];
+    private const DEFAULT_TABLE_LIMIT = 10;
 
     public function show(string $slug)
     {
@@ -25,7 +25,13 @@ class DynamicPageController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
-        $user = auth()->user()->loadMissing('roles:id,name');
+        $user = auth()->user()->loadMissing(['roles:id,name', 'unitKerja:id,nama,kode']);
+        session()->put('unit_kerja', $user->unitKerja ? [
+            'id' => $user->unitKerja->id,
+            'nama' => $user->unitKerja->nama,
+            'kode' => $user->unitKerja->kode,
+        ] : null);
+
         $userRoleNames = $user->roles->pluck('name');
         $pageRoleNames = $page->roles->pluck('name');
 
@@ -36,8 +42,6 @@ class DynamicPageController extends Controller
         $cachedSections = [];
         $pendingRequests = [];
 
-        $queryParameters = request()->only(self::PASSTHROUGH_QUERY_KEYS);
-
         foreach ($page->jsonTemplates as $template) {
             $endpoint = $template->endpoints
                 ->where('status', 'active')
@@ -47,6 +51,7 @@ class DynamicPageController extends Controller
                 continue;
             }
 
+            $queryParameters = $this->getTemplateQueryParameters($template->id, $template->name);
             $fullUrl = $this->appendQueryParameters($endpoint->full_url, $queryParameters);
             $cacheKey = $this->getResponseCacheKey($endpoint->id, $queryParameters);
 
@@ -108,6 +113,8 @@ class DynamicPageController extends Controller
                 'pagination' => null,
                 'error' => null,
                 'fetched_at' => null,
+                'query_parameters' => $this->getTemplateQueryParameters($template->id, $template->name),
+                'unit_kerja' => $user->unitKerja,
             ];
 
             if (isset($cachedSections[$template->id])) {
@@ -135,7 +142,20 @@ class DynamicPageController extends Controller
     {
         ksort($queryParameters);
 
-        return "dynamic-page:endpoint-response:{$endpointId}:" . md5(http_build_query($queryParameters));
+        return "dynamic-page:endpoint-response:v2:{$endpointId}:" . md5(http_build_query($queryParameters));
+    }
+
+    private function getTemplateQueryParameters(int $templateId, string $templateName): array
+    {
+        if (strtolower($templateName) === 'dashboard') {
+            return [];
+        }
+
+        return array_filter([
+            'limit' => request()->input("limit.{$templateId}", self::DEFAULT_TABLE_LIMIT),
+            'offset' => request()->input("offset.{$templateId}"),
+            'search' => request()->input("search.{$templateId}"),
+        ], fn ($value) => $value !== null && $value !== '');
     }
 
     private function appendQueryParameters(string $url, array $queryParameters): string
@@ -174,7 +194,11 @@ class DynamicPageController extends Controller
             if ($response->successful()) {
                 $json = $response->json();
                 $payload['data'] = $json['data'] ?? $json;
-                $payload['pagination'] = $json['pagination'] ?? null;
+                if (strtolower($templateName) === 'dashboard' && isset($payload['data'][0]['summaryCards'])) {
+                    $payload['data'] = $payload['data'][0];
+                }
+
+                $payload['pagination'] = $json['pagination'] ?? $this->normalizePagination($json);
                 $payload['full_response'] = $json;
 
                 return $payload;
@@ -193,5 +217,24 @@ class DynamicPageController extends Controller
         }
 
         return $payload;
+    }
+
+    private function normalizePagination(array $json): ?array
+    {
+        if (! isset($json['limit'], $json['offset']) || (! isset($json['total']) && ! isset($json['filtered']))) {
+            return null;
+        }
+
+        $limit = max(1, (int) $json['limit']);
+        $offset = max(0, (int) $json['offset']);
+        $total = (int) ($json['filtered'] ?? $json['total']);
+
+        return [
+            'limit' => $limit,
+            'offset' => $offset,
+            'total' => $total,
+            'next_offset' => ($offset + $limit) < $total ? $offset + $limit : null,
+            'prev_offset' => $offset > 0 ? max(0, $offset - $limit) : null,
+        ];
     }
 }

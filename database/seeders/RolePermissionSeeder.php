@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -63,28 +64,36 @@ class RolePermissionSeeder extends Seeder
         $viewerRole->syncPermissions(Permission::whereIn('name', ['view_reports', 'view_json_templates'])->get());
 
         // ─── Sample Users ───
+        $unitIds = DB::table('unit_kerjas')
+            ->whereIn('kode', ['UN31', 'UN31.UT15', 'UN31.UT19'])
+            ->pluck('id', 'kode');
+
         $admin = User::firstOrCreate(
             ['email' => 'admin@paramita.com'],
-            ['name' => 'Administrator', 'password' => bcrypt('password'), 'nip' => '000001', 'status' => 'active']
+            ['name' => 'Administrator', 'password' => bcrypt('password'), 'nip' => '000001', 'status' => 'active', 'unit_kerja_id' => $unitIds['UN31'] ?? null]
         );
+        $admin->update(['unit_kerja_id' => $admin->unit_kerja_id ?: ($unitIds['UN31'] ?? null)]);
         if (!$admin->hasRole('admin')) $admin->assignRole('admin');
 
         $pusat = User::firstOrCreate(
             ['email' => 'pusat@paramita.com'],
-            ['name' => 'Pimpinan Pusat', 'password' => bcrypt('password'), 'nip' => '000002', 'status' => 'active']
+            ['name' => 'Pimpinan Pusat', 'password' => bcrypt('password'), 'nip' => '000002', 'status' => 'active', 'unit_kerja_id' => $unitIds['UN31'] ?? null]
         );
+        $pusat->update(['unit_kerja_id' => $pusat->unit_kerja_id ?: ($unitIds['UN31'] ?? null)]);
         if (!$pusat->hasRole('pimpinan-pusat')) $pusat->assignRole('pimpinan-pusat');
 
         $daerah = User::firstOrCreate(
             ['email' => 'daerah@paramita.com'],
-            ['name' => 'Pimpinan Daerah', 'password' => bcrypt('password'), 'nip' => '000003', 'status' => 'active']
+            ['name' => 'Pimpinan Daerah', 'password' => bcrypt('password'), 'nip' => '000003', 'status' => 'active', 'unit_kerja_id' => $unitIds['UN31.UT15'] ?? null]
         );
+        $daerah->update(['unit_kerja_id' => $daerah->unit_kerja_id ?: ($unitIds['UN31.UT15'] ?? null)]);
         if (!$daerah->hasRole('pimpinan-daerah')) $daerah->assignRole('pimpinan-daerah');
 
         $viewer = User::firstOrCreate(
             ['email' => 'viewer@paramita.com'],
-            ['name' => 'Viewer', 'password' => bcrypt('password'), 'nip' => '000004', 'status' => 'active']
+            ['name' => 'Viewer', 'password' => bcrypt('password'), 'nip' => '000004', 'status' => 'active', 'unit_kerja_id' => $unitIds['UN31.UT19'] ?? null]
         );
+        $viewer->update(['unit_kerja_id' => $viewer->unit_kerja_id ?: ($unitIds['UN31.UT19'] ?? null)]);
         if (!$viewer->hasRole('viewer')) $viewer->assignRole('viewer');
     }
 }
