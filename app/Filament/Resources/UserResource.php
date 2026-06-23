@@ -52,6 +52,7 @@ class UserResource extends Resource
                                 modifyQueryUsing: fn (Builder $query) => $query->orderBy('nama')
                             )
                             ->searchable()
+                            ->preload()
                             ->required(),
                         
                         Forms\Components\Select::make('status')
@@ -95,7 +96,8 @@ class UserResource extends Resource
                             ->label('Role')
                             ->relationship('roles', 'name')
                             ->multiple()
-                            ->searchable(),
+                            ->searchable()
+                            ->preload(),
                     ]),
             ]);
     }

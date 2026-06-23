@@ -129,24 +129,16 @@ class PageResource extends Resource
                     ->weight('medium')
                     ->description(fn (Page $record) => '/page/' . $record->slug),
 
-                Tables\Columns\TextColumn::make('jsonTemplates')
+                Tables\Columns\TextColumn::make('templates_summary')
                     ->label('Templates')
-                    ->formatStateUsing(function (Page $record) {
-                        $names = $record->jsonTemplates->pluck('name')->toArray();
-
-                        return $names !== [] ? implode(', ', $names) : 'None';
-                    })
+                    ->state(fn (Page $record): string => self::formatRelationNames($record->jsonTemplates))
                     ->badge()
                     ->color('info')
                     ->wrap(),
 
-                Tables\Columns\TextColumn::make('roles')
+                Tables\Columns\TextColumn::make('roles_summary')
                     ->label('Role Access')
-                    ->formatStateUsing(function (Page $record) {
-                        $names = $record->roles->pluck('name')->toArray();
-
-                        return $names !== [] ? implode(', ', $names) : 'None';
-                    })
+                    ->state(fn (Page $record): string => self::formatRelationNames($record->roles))
                     ->badge()
                     ->color('success')
                     ->wrap(),
@@ -246,5 +238,12 @@ class PageResource extends Resource
         }
 
         return $slug;
+    }
+
+    private static function formatRelationNames($items): string
+    {
+        $names = $items->pluck('name')->unique()->values()->all();
+
+        return $names !== [] ? implode(', ', $names) : 'None';
     }
 }

@@ -36,6 +36,7 @@ class ApiRequestResource extends Resource
                                 modifyQueryUsing: fn (Builder $query) => $query->orderBy('api_name')
                             )
                             ->searchable()
+                            ->preload()
                             ->required()
                             ->label('Vendor API')
                             ->live()
@@ -55,6 +56,7 @@ class ApiRequestResource extends Resource
                                 }
                             )
                             ->searchable()
+                            ->preload()
                             ->required()
                             ->label('API Endpoint'),
                         Forms\Components\TextInput::make('request_id')

@@ -50,6 +50,7 @@ class RolePermissionResource extends Resource
                             ->options(fn () => static::roleOptions())
                             ->required()
                             ->searchable()
+                            ->preload()
                             ->live()
                             ->afterStateUpdated(function ($state, callable $set) {
                                 if ($state) {

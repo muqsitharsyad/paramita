@@ -41,7 +41,7 @@ class DatabaseDefaultSeeder extends Seeder
             ],
             [
                 'base_url' => 'https://prodev.ut.ac.id/jsonviewer/',
-                'version' => 'v1',
+                'version' => '',
                 'auth_type' => 'none',
                 'headers' => ['Accept' => 'application/json'],
                 'timeout' => 30,
@@ -64,7 +64,7 @@ class DatabaseDefaultSeeder extends Seeder
                     'name' => 'monitoring-stock',
                 ],
                 [
-                    'path' => '?api=1&route=Stock_Bahan_Ajar',
+                    'path' => '?api=1&route=Monitoring_Stock_Bahan_ajar',
                     'method' => 'GET',
                     'description' => 'Endpoint for monitoring stock of teaching materials',
                     'status' => 'active',
@@ -80,6 +80,26 @@ class DatabaseDefaultSeeder extends Seeder
 
         // ─── Dynamic Pages ───
         $adminUser = \App\Models\User::where('email', 'admin@paramita.com')->first();
+
+        $dashboardTemplate = JsonTemplate::where('name', 'dashboard')->first();
+
+        if ($dashboardTemplate) {
+            ApiEndpoint::firstOrCreate(
+                [
+                    'vendor_api_id' => $vendorApi->id,
+                    'name' => 'dashboard',
+                ],
+                [
+                    'path' => '?api=1&route=Dashboard',
+                    'method' => 'GET',
+                    'description' => 'Endpoint for dashboard JSON data',
+                    'status' => 'active',
+                    'health_status' => 'unknown',
+                    'requires_auth' => false,
+                    'json_template_id' => $dashboardTemplate->id,
+                ]
+            );
+        }
 
         if ($adminUser && $template) {
             // 1. Monitoring Stock
@@ -115,9 +135,8 @@ class DatabaseDefaultSeeder extends Seeder
                 ]
             );
 
-            // Attach monitoring-stock template to Dashboard page too
-            if (!$page2->jsonTemplates()->where('json_template_id', $template->id)->exists()) {
-                $page2->jsonTemplates()->attach($template->id, ['display_order' => 0]);
+            if ($dashboardTemplate && ! $page2->jsonTemplates()->where('json_template_id', $dashboardTemplate->id)->exists()) {
+                $page2->jsonTemplates()->attach($dashboardTemplate->id, ['display_order' => 0]);
             }
 
             $dashboardRoles = ['pimpinan-pusat', 'pimpinan-daerah', 'viewer'];

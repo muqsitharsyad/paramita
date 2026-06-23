@@ -13,6 +13,8 @@ class DynamicPageController extends Controller
 {
     private const RESPONSE_CACHE_SECONDS = 30;
 
+    private const PASSTHROUGH_QUERY_KEYS = ['limit', 'offset', 'search'];
+
     public function show(string $slug)
     {
         $page = Page::with([
@@ -34,6 +36,8 @@ class DynamicPageController extends Controller
         $cachedSections = [];
         $pendingRequests = [];
 
+        $queryParameters = request()->only(self::PASSTHROUGH_QUERY_KEYS);
+
         foreach ($page->jsonTemplates as $template) {
             $endpoint = $template->endpoints
                 ->where('status', 'active')
@@ -43,10 +47,8 @@ class DynamicPageController extends Controller
                 continue;
             }
 
-            $baseUrl = rtrim($endpoint->vendorApi->base_url, '/');
-            $path = ltrim($endpoint->path, '/');
-            $fullUrl = $baseUrl . '/' . $path;
-            $cacheKey = $this->getResponseCacheKey($endpoint->id);
+            $fullUrl = $this->appendQueryParameters($endpoint->full_url, $queryParameters);
+            $cacheKey = $this->getResponseCacheKey($endpoint->id, $queryParameters);
 
             if ($cached = Cache::get($cacheKey)) {
                 $cachedSections[$template->id] = $cached;
@@ -129,9 +131,27 @@ class DynamicPageController extends Controller
         return view('dynamic-page', compact('page', 'templateSections'));
     }
 
-    private function getResponseCacheKey(int $endpointId): string
+    private function getResponseCacheKey(int $endpointId, array $queryParameters): string
     {
-        return "dynamic-page:endpoint-response:{$endpointId}";
+        ksort($queryParameters);
+
+        return "dynamic-page:endpoint-response:{$endpointId}:" . md5(http_build_query($queryParameters));
+    }
+
+    private function appendQueryParameters(string $url, array $queryParameters): string
+    {
+        $queryParameters = array_filter(
+            $queryParameters,
+            fn ($value) => $value !== null && $value !== ''
+        );
+
+        if ($queryParameters === []) {
+            return $url;
+        }
+
+        $separator = str_contains($url, '?') ? '&' : '?';
+
+        return $url . $separator . http_build_query($queryParameters);
     }
 
     private function normalizeResponse(string $pageSlug, string $templateName, string $url, $response): array

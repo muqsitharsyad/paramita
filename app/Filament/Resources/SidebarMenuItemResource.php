@@ -62,6 +62,7 @@ class SidebarMenuItemResource extends Resource
                                     ->placeholder('- Pilih Dynamic Page -')
                                     ->helperText('Pilih page untuk mengisi URL secara otomatis.')
                                     ->searchable()
+                                    ->preload()
                                     ->live()
                                     ->dehydrated(false)
                                     ->afterStateUpdated(function ($state, callable $set) {
@@ -96,6 +97,7 @@ class SidebarMenuItemResource extends Resource
                                 Forms\Components\Select::make('parent_id')
                                     ->label('Parent Menu')
                                     ->relationship('parent', 'label')
+                                    ->preload()
                                     ->nullable()
                                     ->placeholder('- Root -'),
                                 Forms\Components\TextInput::make('order')
@@ -110,6 +112,7 @@ class SidebarMenuItemResource extends Resource
                             ->label('Role Access')
                             ->multiple()
                             ->relationship('roles', 'name')
+                            ->preload()
                             ->required()
                             ->helperText('Pilih role yang bisa melihat menu ini'),
                     ]),

@@ -46,21 +46,21 @@ class RolePermissionSeeder extends Seeder
 
         // Pimpinan Pusat — strategic oversight
         $pusatRole = Role::firstOrCreate(['name' => 'pimpinan-pusat', 'guard_name' => 'web']);
-        $pusatRole->syncPermissions([
+        $pusatRole->syncPermissions(Permission::whereIn('name', [
             'view_vendors', 'view_api_endpoints', 'view_api_requests',
             'view_api_configurations', 'view_json_templates', 'view_reports',
-        ]);
+        ])->get());
 
         // Pimpinan Daerah — operational monitoring
         $daerahRole = Role::firstOrCreate(['name' => 'pimpinan-daerah', 'guard_name' => 'web']);
-        $daerahRole->syncPermissions([
+        $daerahRole->syncPermissions(Permission::whereIn('name', [
             'view_vendors', 'view_api_endpoints', 'test_api_endpoints',
             'view_api_requests', 'view_api_configurations', 'view_json_templates', 'view_monitoring',
-        ]);
+        ])->get());
 
         // Viewer — read-only reports & templates
         $viewerRole = Role::firstOrCreate(['name' => 'viewer', 'guard_name' => 'web']);
-        $viewerRole->syncPermissions(['view_reports', 'view_json_templates']);
+        $viewerRole->syncPermissions(Permission::whereIn('name', ['view_reports', 'view_json_templates'])->get());
 
         // ─── Sample Users ───
         $admin = User::firstOrCreate(

@@ -58,6 +58,7 @@ class ApiEndpointResource extends Resource
                                 modifyQueryUsing: fn (Builder $query) => $query->orderBy('api_name')
                             )
                             ->searchable()
+                            ->preload()
                             ->required()
                             ->label('Vendor API'),
                         Forms\Components\TextInput::make('name')
@@ -118,6 +119,7 @@ class ApiEndpointResource extends Resource
                                     ->orderBy('name')
                             )
                             ->searchable()
+                            ->preload()
                             ->label('JSON Response Template')
                             ->helperText('Optional. Used to validate response structure.')
                             ->live()
@@ -494,14 +496,7 @@ class ApiEndpointResource extends Resource
             default => 'Endpoint Test Failed',
         };
 
-        $body = implode("\n", array_filter([
-            ($result['method'] ?? 'GET') . ' ' . ($result['full_url'] ?? ''),
-            $result['health_message'] ?? null,
-            isset($result['status_code']) ? 'HTTP ' . $result['status_code'] : null,
-            isset($result['template_validation']) && $result['template_validation'] !== null
-                ? ('Template: ' . (($result['template_validation']['valid'] ?? false) ? 'matched' : 'mismatch'))
-                : 'Template: skipped',
-        ]));
+        $body = self::formatTestResultBody($result);
 
         Notification::make()
             ->title($title)
@@ -509,6 +504,67 @@ class ApiEndpointResource extends Resource
             ->duration(10000)
             ->{self::notificationMethod($status)}()
             ->send();
+    }
+
+    private static function formatTestResultBody(array $result): string
+    {
+        $statusCode = $result['status_code'] ?? null;
+        $requestLine = ($result['method'] ?? 'GET') . ' ' . ($result['full_url'] ?? '');
+
+        $lines = [
+            'Endpoint:',
+            $requestLine,
+            '',
+            'Hasil request:',
+            $statusCode ? "HTTP {$statusCode}" : ($result['health_message'] ?? 'Request gagal.'),
+        ];
+
+        if (($result['health_status'] ?? null) === 'warning') {
+            $lines[] = 'Request berhasil, tetapi struktur response berbeda dari template.';
+        } elseif (($result['health_status'] ?? null) === 'healthy') {
+            $lines[] = 'Request berhasil dan response cocok dengan template.';
+        } elseif (isset($result['health_message'])) {
+            $lines[] = $result['health_message'];
+        }
+
+        $lines[] = '';
+        $lines[] = isset($result['template_validation']) && $result['template_validation'] !== null
+            ? self::formatTemplateValidation($result['template_validation'])
+            : 'Template tidak dicek.';
+
+        return implode("\n", array_filter($lines, fn ($line) => $line !== null));
+    }
+
+    private static function formatTemplateValidation(array $validation): string
+    {
+        if ($validation['valid'] ?? false) {
+            return 'Template: matched';
+        }
+
+        $errors = array_slice($validation['errors'] ?? [], 0, 5);
+
+        if ($errors === []) {
+            return 'Template tidak cocok.';
+        }
+
+        $formattedErrors = collect($errors)
+            ->map(fn (string $error, int $index): string => ($index + 1) . '. ' . self::formatTemplateValidationError($error))
+            ->implode("\n");
+
+        return "Template tidak cocok.\nDetail masalah:\n{$formattedErrors}";
+    }
+
+    private static function formatTemplateValidationError(string $error): string
+    {
+        if (preg_match('/^Missing key: (.+)$/', $error, $matches)) {
+            return "Field `{$matches[1]}` tidak ada di response.";
+        }
+
+        if (preg_match('/^Type mismatch at (.+): expected (.+), got (.+)$/', $error, $matches)) {
+            return "Field `{$matches[1]}` tipe data salah. Template minta {$matches[2]}, response memberi {$matches[3]}.";
+        }
+
+        return $error;
     }
 
     private static function runBulkTest(iterable $records): void

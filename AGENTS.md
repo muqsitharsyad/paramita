@@ -97,14 +97,18 @@ Each page:
 - is assigned to one or more roles
 - may render one or more JSON templates
 - fetches live data from endpoint-linked templates
+- passes `limit`, `offset`, and `search` query parameters through to endpoint URLs when present
+- renders pagination controls when upstream responses include `prev_offset` or `next_offset`
+- supports simple table search on rendered array data
 
 ### Controller Optimizations
 
 `app/Http/Controllers/DynamicPageController.php` currently:
 
 - eager loads page roles and template endpoint relations
+- uses endpoint `full_url` so query-string paths work consistently with endpoint testing
 - uses `Http::pool()` for multi-template requests
-- caches fetched template payloads for 30 seconds
+- caches fetched template payloads for 30 seconds per endpoint/query-parameter combination
 - degrades gracefully when one upstream request fails
 
 ---
@@ -151,7 +155,7 @@ Current pattern:
 
 - eager load only relations that table/infolist actually uses
 - narrow eager-loaded columns where possible
-- avoid `preload()` on large searchable selects and filters
+- preload searchable relation selects where users expect initial options to be visible
 - sort relation option queries explicitly
 
 Examples:
@@ -250,10 +254,10 @@ What fresh seed produces:
 
 - 4 roles
 - 4 sample users
-- JSON templates including `monitoring-stock`
+- JSON templates including `dashboard` and `monitoring-stock`
 - 1 sample vendor
 - 1 sample vendor API
-- 1 endpoint linked to `monitoring-stock`
+- endpoints linked to `dashboard` and `monitoring-stock`
 - dynamic pages:
   - `/page/dashboard`
   - `/page/monitoring-stock`
@@ -291,13 +295,17 @@ Meaning:
 From `.env.example` and current optimization direction:
 
 ```env
+APP_URL=http://127.0.0.1:8000
+DB_HOST=127.0.0.1
+DB_PORT=3307
 SESSION_DRIVER=file
 CACHE_STORE=file
 ```
 
 Rationale:
 
-- avoids database-backed session/cache overhead on single-server setups
+- `DB_PORT=3307` matches current Laragon MySQL setup; use `3306` on default MySQL installs
+- file-backed session/cache avoids database overhead on single-server setups
 
 ---
 
@@ -317,6 +325,8 @@ Relevant test files:
 - `tests/Feature/RoleBasedLoginTest.php`
 - `tests/Feature/DynamicPageTest.php`
 - `tests/Feature/SidebarMenuItemTest.php`
+- `tests/Feature/ApiEndpointResourceTest.php`
+- `tests/Feature/PageResourceTest.php`
 
 ---
 
@@ -327,10 +337,10 @@ When extending the system:
 1. prefer Dynamic Pages over adding new role-specific controllers/views
 2. prefer database-managed sidebar items over hardcoded menu links
 3. keep Filament relation queries explicit and narrowly loaded
-4. avoid reintroducing `preload()` for large searchable relation inputs unless there is a measured UX need
+4. keep searchable select preloading only where initial options materially help admin users
 5. if adding a role, update both database roles and `config/roles.php`
 6. if changing seeded page access, update both `DatabaseDefaultSeeder` and `SidebarMenuSeeder`
 
 ---
 
-Document last updated: June 4, 2026
+Document last updated: June 23, 2026

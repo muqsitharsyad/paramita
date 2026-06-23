@@ -36,6 +36,7 @@ class ApiConfigurationResource extends Resource
                                 modifyQueryUsing: fn (Builder $query) => $query->orderBy('api_name')
                             )
                             ->searchable()
+                            ->preload()
                             ->required()
                             ->label('Vendor API'),
                         Forms\Components\TextInput::make('config_key')

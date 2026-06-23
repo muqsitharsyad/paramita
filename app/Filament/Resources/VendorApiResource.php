@@ -36,6 +36,7 @@ class VendorApiResource extends Resource
                                 modifyQueryUsing: fn (Builder $query) => $query->orderBy('name')
                             )
                             ->searchable()
+                            ->preload()
                             ->required()
                             ->label('Vendor'),
                         Forms\Components\TextInput::make('api_name')
@@ -48,10 +49,10 @@ class VendorApiResource extends Resource
                             ->maxLength(255)
                             ->label('Base URL'),
                         Forms\Components\TextInput::make('version')
-                            ->default('v1')
-                            ->required()
                             ->maxLength(255)
-                            ->label('Version'),
+                            ->label('Version')
+                            ->dehydrateStateUsing(fn ($state) => $state ?? '')
+                            ->helperText('Opsional. Isi hanya jika API memang memakai path versi, misalnya v1.'),
                         Forms\Components\TextInput::make('email')
                             ->email()
                             ->maxLength(255)

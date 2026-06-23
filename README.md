@@ -58,7 +58,23 @@ copy .env.example .env
 php artisan key:generate
 ```
 
-Update `.env` with your database credentials, then run:
+Update `.env` with your database credentials. Current local defaults are:
+
+```env
+APP_URL=http://127.0.0.1:8000
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3307
+DB_DATABASE=paramita
+DB_USERNAME=root
+DB_PASSWORD=
+SESSION_DRIVER=file
+CACHE_STORE=file
+```
+
+Use `DB_PORT=3306` instead if MySQL on the target device still uses the default port.
+
+Create the database first, then run:
 
 ```bash
 php artisan migrate:fresh --seed
@@ -69,7 +85,20 @@ npm run build
 For local development:
 
 ```bash
-composer run dev
+php artisan serve --host=127.0.0.1 --port=8000
+npm run dev
+```
+
+If you use Laragon Apache on port `81`, Apache can serve the project, but the documented local app URL above uses Laravel's development server at `http://127.0.0.1:8000`.
+
+After pulling updates on another device:
+
+```bash
+composer install
+npm install
+php artisan migrate --seed
+php artisan optimize:clear
+npm run build
 ```
 
 ## Seeded Accounts
@@ -98,9 +127,11 @@ Fresh seed creates:
 
 - roles and permissions
 - sample users
-- JSON templates including `monitoring-stock`
+- JSON templates including `dashboard` and `monitoring-stock`
 - sample vendor and vendor API
-- sample endpoint linked to a template
+- sample endpoints linked to templates:
+  - `?api=1&route=Dashboard`
+  - `?api=1&route=Monitoring_Stock_Bahan_ajar`
 - Dynamic Pages:
   - `/page/dashboard`
   - `/page/monitoring-stock`
@@ -113,8 +144,9 @@ Applied optimization direction:
 - strict model mode in non-production to catch lazy loading
 - explicit eager loading in Filament resources
 - narrower relation columns where possible
-- deferred loading for large searchable relation selects
+- searchable relation selects preload their first options for better admin UX
 - cached and pooled remote fetches in `DynamicPageController`
+- Dynamic Pages pass `limit`, `offset`, and `search` query parameters to endpoint URLs
 
 Recommended environment defaults:
 
